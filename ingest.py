@@ -1,5 +1,6 @@
 import pymupdf
 from pathlib import Path
+from sentence_transformers import SentenceTransformer
 
 
 # STEP 1: Extract text from PDF
@@ -55,7 +56,28 @@ def chunk_text(pages, chunk_size=1000, overlap=200):
     return chunks
 
 
-# STEP 3: Execute the pipeline
+# STEP 3: Generate embeddings
+
+def generate_embeddings(chunks):
+
+    print("\nLoading embedding model...")
+
+    model = SentenceTransformer("all-MiniLM-L6-v2")
+
+    texts = [chunk["text"] for chunk in chunks]
+
+    print("Generating embeddings...")
+
+    embeddings = model.encode(
+        texts,
+        show_progress_bar=True,
+        convert_to_numpy=True
+    )
+
+    return embeddings
+
+
+# STEP 4: Execute the pipeline
 
 if __name__ == "__main__":
 
@@ -73,13 +95,14 @@ if __name__ == "__main__":
 
         chunks = chunk_text(pages)
 
+        
+
         print(f"Total chunks generated: {len(chunks)}")
 
-        print("\n--- First 3 Chunks ---")
+        embeddings = generate_embeddings(chunks)
 
-        for index, chunk in enumerate(chunks[:3], start=1):
+        print("\nEmbedding generation completed!")
 
-            print(f"\nChunk {index}")
-            print(f"Page: {chunk['page']}")
-            print(f"Content:\n{chunk['text'][:300]}")
-            print("-" * 50)
+        print(f"Embedding shape: {embeddings.shape}")
+
+        print(f"First embedding:\n{embeddings[0]}")
